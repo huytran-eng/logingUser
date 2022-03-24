@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+    <h2>Account Registration</h2><br>
+    <ul>
+        <li>Email phai dung dinh dang</li>
+        <li>Mat khau phai co it nhat 5 ki tu</li>
+    </ul>
+    <form method="POST">
+        <label for="email">Email:</label><br>
+        <input type="text" id="email" name="email"><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password"><br><br>
+        <label for="role">Chon chuc danh:</label>
+        <select name="role" id="role">
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+            <option value="guest">guest</option>
+        </select>
+        <input type="submit">
+    </form>
+    <br><br>
+    {{if .}}
+    {{.}}
+    {{end}}
+
+</body>
+
+</html>
