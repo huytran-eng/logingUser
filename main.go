@@ -36,20 +36,24 @@ func main() {
 	http.HandleFunc("/logout", logout)
 	http.ListenAndServe(":8080", context.ClearHandler(http.DefaultServeMux))
 }
+
+// trang web mac dinh
 func index(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("hello")
+	fmt.Println("tai index")
 	session, _ := store.Get(req, "session")
 	a, ok := session.Values["email"]
 	fmt.Println(a)
-	fmt.Println("ok:", ok)
 	if !ok {
 		tpl.ExecuteTemplate(w, "index.html", nil)
 		return
 	}
 	tpl.ExecuteTemplate(w, "content.html", nil)
 }
-func signup(w http.ResponseWriter, req *http.Request) {
 
+// ham dang ki
+func signup(w http.ResponseWriter, req *http.Request) {
+	// neu nhan duoc du lieu
+	fmt.Println("tai dang ki")
 	if req.Method == http.MethodPost {
 		req.ParseForm()
 		// kiem tra email co hop le khong
@@ -66,13 +70,6 @@ func signup(w http.ResponseWriter, req *http.Request) {
 		}
 		role := req.FormValue("role")
 		fmt.Println(role)
-		// sID := uuid.NewV4()
-		// c := &http.Cookie{
-		// 	Name:  "session",
-		// 	Value: sID.String(),
-		// }
-		// http.SetCookie(w, c)
-
 		//kiem tra email co ton tai trong database khong
 		stmt := "SELECT email FROM hash WHERE email = ?"
 		row := db.QueryRow(stmt, email)
@@ -85,9 +82,9 @@ func signup(w http.ResponseWriter, req *http.Request) {
 		}
 		var hash []byte
 		// func GenerateFromPassword(password []byte, cost int) ([]byte, error)
+		// hash password thanh mot string kho decrypt
 		hash, _ = bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
-		fmt.Println("hash:", hash)
-		fmt.Println("string(hash):", string(hash))
+		// dua cac thong tin vua dang ki vao database
 		var insertStmt *sql.Stmt
 		insertStmt, err = db.Prepare("INSERT INTO hash (email, hash,role) VALUES (?, ?, ?);")
 		if err != nil {
@@ -103,15 +100,16 @@ func signup(w http.ResponseWriter, req *http.Request) {
 			tpl.ExecuteTemplate(w, "register.html", "there was a problem registering account")
 			return
 		}
-		fmt.Println("dang nhap thanh cong")
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 
 	}
 	tpl.ExecuteTemplate(w, "register.html", nil)
 }
-func login(w http.ResponseWriter, req *http.Request) {
 
+//ham dang nhap
+func login(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("tai login")
 	if req.Method == http.MethodPost {
 		req.ParseForm()
 		email := req.FormValue("email")
@@ -120,13 +118,15 @@ func login(w http.ResponseWriter, req *http.Request) {
 		var hash string
 		row := db.QueryRow(stmt, email)
 		err := row.Scan(&hash)
+		fmt.Println("hash: ", hash)
 		if err != nil {
 			fmt.Println("error selecting password in db")
 			tpl.ExecuteTemplate(w, "login.html", "kiem tra lai")
 			return
 		}
+		fmt.Println(pass)
 		err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(pass))
-		if err != nil {
+		if err == nil {
 			// Get always returns a session, even if empty
 			// returns error if exists and could not be decoded
 			// Get(r *http.Request, name string) (*Session, error)
@@ -136,17 +136,21 @@ func login(w http.ResponseWriter, req *http.Request) {
 			// save before writing to response/return from handler
 			session.Save(req, w)
 			http.Redirect(w, req, "/", http.StatusSeeOther)
-			fmt.Println("dang nhap thanh cong")
+			return
+		} else {
+			fmt.Println("incorrect password")
+			tpl.ExecuteTemplate(w, "login.html", "check username and password")
 			return
 		}
-		fmt.Println("incorrect password")
-		tpl.ExecuteTemplate(w, "login.html", "check username and password")
+
 	}
 	tpl.ExecuteTemplate(w, "login.html", nil)
 }
+
+//ham dang xuat bang cach xoa session,cookie
 func logout(w http.ResponseWriter, req *http.Request) {
 	session, _ := store.Get(req, "session")
 	delete(session.Values, "email")
 	session.Save(req, w)
-	tpl.ExecuteTemplate(w, "login.html", "log out")
+	http.Redirect(w, req, "/", http.StatusSeeOther)
 }
